@@ -7,6 +7,9 @@ pipeline {
         disableConcurrentBuilds()
         ansiColor('xterm')
     }
+    parameters {
+        choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Pick something')
+    }
     stages {
         stage('Init') {
             steps {
@@ -17,6 +20,11 @@ pipeline {
             }
         }
         stage('Plan') {
+            when {
+                expression {
+                    params.ACTION == 'Apply'
+                }
+            }
             steps {
                 sh """
                  cd 01-vpc
@@ -29,10 +37,28 @@ pipeline {
                 message "Should we continue?"
                 ok "Yes, we should."
             }
+            when {
+                expression {
+                    params.ACTION == 'Apply'
+                }
+            }
             steps {
                 sh """
                  cd 01-vpc
                  terraform apply -auto-approve
+                """
+            }
+        }
+        stage('Destroy') {
+            when {
+                expression {
+                    params.ACTION == 'Destroy'
+                }
+            }
+            steps {
+                sh """
+                 cd 01-vpc
+                 terraform destroy -auto-approve
                 """
             }
         }
